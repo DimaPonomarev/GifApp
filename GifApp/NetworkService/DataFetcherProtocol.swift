@@ -18,27 +18,30 @@ protocol DataFetcherProtocol {
 }
 
 extension DataFetcherProtocol {
-
+    
     //  MARK: - In this block getting URLRequest and URLSessionDataTask to make response(no matter which model will come)
     
-    public func makeDataTask(urlRequest: URLRequest?, type: Decodable.Type, complitionHandler: @escaping(Result<Any, NetworkError>) -> Void) {
+    func makeDataTask(urlRequest: URLRequest?, type: Decodable.Type, complitionHandler: @escaping(Result<Any, NetworkError>) -> Void) {
+        
         guard let urlRequest else {
             complitionHandler(.failure(error: .invalidURL))
             return
         }
+        
         let task = JSONDataTask(type: type, request: urlRequest) { (data, response, error)  in
-            guard let data else {
-                complitionHandler(.failure(error: .invalidData))
-                return
+            if let error {
+                complitionHandler(.failure(error: error))
+            } else if let data {
+                complitionHandler(.succes(result: data))
             }
-            complitionHandler(.succes(result: data))
         }
         task.resume()
     }
     
     //  MARK: - In this block making data, response, error from network and JSONDecoder
     
-    private func JSONDataTask(type: Decodable.Type, request: URLRequest, complition: @escaping (Any?, HTTPURLResponse?, Error?) -> Void) -> URLSessionDataTask {
+    private func JSONDataTask(type: Decodable.Type, request: URLRequest, complition: @escaping (Any?, HTTPURLResponse?, NetworkError?) -> Void) -> URLSessionDataTask {
+        
         let dataTask = URLSession.shared.dataTask(with: request) {  data, response, error in
             
             DispatchQueue.global().async {
@@ -47,7 +50,7 @@ extension DataFetcherProtocol {
                     return
                 }
                 if error != nil {
-                    complition(nil, HTTPResponse, error)
+                    complition(nil, HTTPResponse, NetworkError.invalidStatusCode(HTTPResponse.statusCode))
                 } else if let data {
                     switch HTTPResponse.statusCode {
                     case 200:
@@ -58,7 +61,7 @@ extension DataFetcherProtocol {
                             complition(nil, HTTPResponse, NetworkError.jsonParsingFailure)
                         }
                     default:
-                        complition(nil, HTTPResponse, error)
+                        complition(nil, HTTPResponse, NetworkError.invalidStatusCode(HTTPResponse.statusCode))
                     }
                 }
             }
@@ -71,7 +74,7 @@ extension DataFetcherProtocol {
     private func decodeJson<T: Decodable>(type: T.Type, from data: Data?) -> T? {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        guard let data else {return nil}
+        guard let data else { return nil }
         do {
             return try decoder.decode(type.self, from: data)
         } catch {

@@ -18,6 +18,5 @@ final class MainScreenAssembly{
         presenter.viewController = vc
         presenter.router = router
         router.presenter = presenter
-        
     }
 }

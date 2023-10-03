@@ -11,17 +11,12 @@ import SnapKit
 class CustomCollectionViewCell: UICollectionViewCell {
     
     static var identifier: String {
-        return String(describing: self)
-    }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        imageView.image = nil
+        String(describing: self)
     }
     
     //MARK: - UI properties
     
-    let imageView = WebImageView()
+    private let imageView = WebImageView()
     
     //MARK: - init
     
@@ -34,10 +29,16 @@ class CustomCollectionViewCell: UICollectionViewCell {
         fatalError()
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        imageView.image = nil
+        
+    }
+    
     // MARK: - Public Methods
     
-    func configureView(_ model: ModelToShowOnScreen) {
-        self.imageView.downloadGifImage(imageUrl: model.image)
+    func configureView(_ model: ViewModel) {
+        self.imageView.image = model.image
     }
 }
 
@@ -50,14 +51,12 @@ private extension CustomCollectionViewCell {
     func setup() {
         addViews()
         makeConstraints()
-        setupViews()
     }
     
     //MARK: - addViews
     
     func addViews() {
         contentView.addSubview(imageView)
-        
     }
     
     //MARK: - makeConstraints
@@ -66,11 +65,5 @@ private extension CustomCollectionViewCell {
         imageView.snp.makeConstraints {
             $0.edges.equalToSuperview().inset(5)
         }
-    }
-    
-    //MARK: - setupViews
-    
-    func setupViews() {
-        
     }
 }

@@ -8,14 +8,14 @@
 import UIKit
 
 
-class WebImageView: UIImageView {
+final class WebImageView: UIImageView {
     
     func downloadGifImage(imageUrl: String?) {
         guard let imageUrl, let url = URL(string: imageUrl) else {return}
         let dataTask = URLSession.shared.dataTask(with: url) { data, response, error in
             DispatchQueue.main.async { [weak self] in
                 guard let self, let data else { return }
-                if let image = UIImage().gifImageWithData(data) {
+                if let image = UIImage().GIFMakerFromImageWith(data) {
                     self.image = image
                 }
             }

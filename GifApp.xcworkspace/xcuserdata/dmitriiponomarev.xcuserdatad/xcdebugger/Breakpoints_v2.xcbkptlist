@@ -7,48 +7,48 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "FDC8A3DF-D557-493F-BB2E-01B5EACFF1AD"
+            uuid = "434322A7-92B6-49E7-91E8-D5965B7B6C2E"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "GifApp/MainModul/MainScreenViewController.swift"
+            filePath = "GifApp/MainModul/Assembly/MainScreenViewModul/MainScreenPresenter.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "167"
-            endingLineNumber = "167"
-            landmarkName = "updateSearch(searchController:)"
+            startingLineNumber = "93"
+            endingLineNumber = "93"
+            landmarkName = "loadAdditionalData()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "96BD773B-46AB-4673-A69F-49F23CC5DDAA"
+            uuid = "87965776-DBF5-4FF6-B4FD-ED9C47F232C4"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "GifApp/MainModul/MainScreenInteractor.swift"
+            filePath = "GifApp/MainModul/Assembly/MainScreenViewModul/MainScreenPresenter.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "30"
-            endingLineNumber = "30"
-            landmarkName = "providingGifData(in:)"
+            startingLineNumber = "54"
+            endingLineNumber = "54"
+            landmarkName = "firstLoadData(text:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "29371BAC-B6A7-4042-B7EC-F1422198C13E"
-            shouldBeEnabled = "No"
+            uuid = "B81103C9-87AB-415D-9195-89E01216E548"
+            shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "GifApp/NetworkService/DataFetcherProtocol.swift"
+            filePath = "GifApp/MainModul/Assembly/MainScreenViewModul/MainScreenPresenter.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "26"
-            endingLineNumber = "26"
-            landmarkName = "makeDataTask(urlRequest:type:complitionHandler:)"
+            startingLineNumber = "56"
+            endingLineNumber = "56"
+            landmarkName = "firstLoadData(text:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

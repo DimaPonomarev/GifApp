@@ -8,27 +8,25 @@
 import UIKit
 
 protocol MainScreenRouterProtocol: AnyObject {
+    
     var presenter: MainScreenPresentationProtocol? {get set}
-    func showAlert(dataToShare: String)
+    func showShareAlertWith(_ dataToShare: ViewModel)
+    func errorAlert(error: NetworkError)
 }
 
 class MainScreenRouter: MainScreenRouterProtocol {
+    
     weak var presenter: MainScreenPresentationProtocol?
     
-    func showAlert(dataToShare: String) {
-
-        let alertController = UIAlertController(title: "Поделиться", message: "Выберите способ", preferredStyle: .actionSheet)
-        let shareAction = UIAlertAction(title: "Поделиться", style: .default) { [weak self]
-            action in
-            guard let self else { return }
-            let activityViewController = UIActivityViewController(activityItems: [dataToShare], applicationActivities: nil)
-            self.presenter?.viewController?.present(activityViewController, animated: true)
-        }
+    func showShareAlertWith(_ dataToShare: ViewModel) {
+        let activityViewController = UIActivityViewController(activityItems: [dataToShare.urlToImage], applicationActivities: nil)
+        presenter?.viewController?.present(activityViewController, animated: true)
+    }
+    
+    func errorAlert(error: NetworkError) {
+        let alertController = UIAlertController(title: "Ошибка", message: error.localizedDescription, preferredStyle: .alert)
         let cancel = UIAlertAction(title: "Отмена", style: .cancel)
-        alertController.addAction(shareAction)
         alertController.addAction(cancel)
-        
-        self.presenter?.viewController?.present(alertController, animated: true)
-        
+        presenter?.viewController?.present(alertController, animated: true)
     }
 }

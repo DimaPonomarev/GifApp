@@ -11,24 +11,26 @@ enum NetworkError: Error {
     case invalidURL
     case missedHTTPURLResponse
     case jsonParsingFailure
-    case invalidData
     case invalidStatusCode(Int)
-    case unknownError(Error)
+    case canceledResponse
+    case unknownError
     
     var localizedDescription: String {
         switch self {
         case .invalidURL:
             return "Invalid URL error"
         case .missedHTTPURLResponse:
-            return "Missed HTTPURLResponse error"
+            return "Missed HTTPURLResponse error, check your connection"
         case .jsonParsingFailure:
             return "JSON parsing failure error"
-        case .invalidData:
-            return "Invalid data error"
         case .invalidStatusCode(let code):
             return "Invalid status code error: \(code)"
-        case .unknownError(let error):
-            return "Unknown error: \(error.localizedDescription)"
+        case .canceledResponse:
+            return "Response canceled"
+        case .unknownError:
+            return "Unknown error"
+            
+            
         }
     }
 }

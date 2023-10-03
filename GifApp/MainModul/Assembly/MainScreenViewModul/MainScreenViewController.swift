@@ -10,13 +10,13 @@ import UIKit
 import SnapKit
 
 protocol MainScreenDisplayLogic: UIViewController {
+    
     var presenter: MainScreenPresentationProtocol? {get set}
-    func passDataFromPresenterToViewController(model: [ModelToShowOnScreen])
-    func passDataFromPresenterToViewControllerWithPagging(model: [ModelToShowOnScreen])
-    var isLoading: Bool { get set }
+    func updateView()
+    func showErrorAlert(error: NetworkError)
 }
 
-class MainScreenViewController: UIViewController, MainScreenDisplayLogic {
+final class MainScreenViewController: UIViewController {
     
     //MARK: - MVP Properties
     
@@ -24,63 +24,52 @@ class MainScreenViewController: UIViewController, MainScreenDisplayLogic {
     
     //MARK: - UI properties
     
-    var isLoading = false
-    
-    let searchController = UISearchController()
-    let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
-    
-    var currentData = [ModelToShowOnScreen]()
+    private let customSearchController = CustomSearchController()
+    private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
     
     // MARK: - Init
     
     override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?){
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-        setup()
+        setupVIPERModel()
     }
     
     required init?(coder aDecoder: NSCoder){
         super.init(coder: aDecoder)
-        setup()
-    }
-    
-    // MARK: - Setup
-    
-    private func setup() {
-        let assembly = MainScreenAssembly()
-        assembly.configurate(self)
+        setupVIPERModel()
     }
     
     //MARK: - View lifecycle
     
     override func viewDidLoad(){
         super.viewDidLoad()
-        addViews()
-        makeConstraints()
-        setupCollectionView()
-        setupSearchBar()
+        setupConfigure()
     }
     
-    //MARK: - passDataFromPresenterToViewController
-    
-    func passDataFromPresenterToViewController(model: [ModelToShowOnScreen]) {
-        self.currentData = model
-        self.collectionView.reloadData()
-        
-    }
-    
-    func passDataFromPresenterToViewControllerWithPagging(model: [ModelToShowOnScreen]) {
-        
-        for each in model {
-            self.currentData.append(each)
-            self.collectionView.reloadData()
-            self.isLoading = false
-        }
+    deinit {
+        print("deinit")
     }
 }
 
 //MARK: - private method
 
 private extension MainScreenViewController {
+    
+    // MARK: - setupVIPERModel
+    
+    func setupVIPERModel() {
+        let assembly = MainScreenAssembly()
+        assembly.configurate(self)
+    }
+    
+    // MARK: - setupConfigure
+    
+    func setupConfigure() {
+        addViews()
+        makeConstraints()
+        setupCollectionView()
+        setupSearchBar()
+    }
     
     //MARK: - addViews
     
@@ -99,54 +88,80 @@ private extension MainScreenViewController {
     //MARK: - setupCollectionView
     
     func setupCollectionView() {
-        collectionView.backgroundColor = .darkGray
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.register(CustomCollectionViewCell.self, forCellWithReuseIdentifier: CustomCollectionViewCell.identifier)
-        let flowLayout = UICollectionViewFlowLayout()
-        flowLayout.minimumInteritemSpacing = 0
-        flowLayout.minimumLineSpacing = 0
-        collectionView.setCollectionViewLayout(flowLayout, animated: true)
+        let layout = UICollectionViewFlowLayout()
+        layout.minimumInteritemSpacing = 0
+        layout.minimumLineSpacing = 0
+        collectionView.setCollectionViewLayout(layout, animated: true)
     }
     
     //MARK: - setupSearchBar
     
     func setupSearchBar() {
-        navigationItem.searchController = searchController
-        searchController.searchResultsUpdater = self
-        searchController.searchBar.textField?.backgroundColor = .white.withAlphaComponent(0.7)
-        searchController.searchBar.textField?.keyboardType = .asciiCapable
-        navigationItem.hidesSearchBarWhenScrolling = false
-        searchController.searchBar.delegate = self
-    }
-    
-    func appendNewDataTo(data: [ModelToShowOnScreen]) {
-        for each in data {
-            currentData.append(each)
-            self.collectionView.reloadData()
-            self.isLoading = false
-            
+        navigationItem.searchController = customSearchController
+        customSearchController.closure = { [weak self] text in
+            guard let self else { return }
+            self.presenter?.requestFor(inputedText: self.customSearchController.searchBar.text)
         }
     }
 }
 
+//MARK: - MainScreenDisplayLogic
 
-//MARK: - extension UICollectionViewDataSource
+extension MainScreenViewController: MainScreenDisplayLogic {
+    
+    func updateView() {
+        collectionView.reloadData()
+    }
+    
+    func showErrorAlert(error: NetworkError) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            switch error {
+            case .canceledResponse: break
+            default: self.presenter?.router?.errorAlert(error: error)
+            }
+        }
+    }
+}
+
+//MARK: - UICollectionViewDataSource
 
 extension MainScreenViewController: UICollectionViewDataSource {
+    
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        currentData.count
+        presenter?.getCountModel() ?? 0
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomCollectionViewCell.identifier, for: indexPath) as? CustomCollectionViewCell else { return UICollectionViewCell() }
-        let model = currentData[indexPath.row]
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomCollectionViewCell.identifier, for: indexPath) as? CustomCollectionViewCell,
+              let model = presenter?.getModel(index: indexPath.row) else { return UICollectionViewCell() }
         cell.configureView(model)
         return cell
     }
 }
 
-//MARK: - extension UICollectionViewDelegateFlowLayout
+//MARK: - UICollectionViewDelegate
+
+extension MainScreenViewController: UICollectionViewDelegate {
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let model = presenter?.getModel(index: indexPath.row) else { return }
+        self.presenter?.router?.showShareAlertWith(model)
+    }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let offsetY = scrollView.contentOffset.y
+        let contentHeight = scrollView.contentSize.height
+        if offsetY > contentHeight - scrollView.frame.height {
+            presenter?.loadAdditionalData()
+        }
+    }
+}
+
+//MARK: - UICollectionViewDelegateFlowLayout
 
 extension MainScreenViewController: UICollectionViewDelegateFlowLayout {
     
@@ -156,41 +171,3 @@ extension MainScreenViewController: UICollectionViewDelegateFlowLayout {
         return CGSize(width: itemWidth, height: itemWidth)
     }
 }
-
-//MARK: - extension UICollectionViewDelegate
-
-extension MainScreenViewController: UICollectionViewDelegate {
-    
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        self.presenter?.router?.showAlert(dataToShare: self.currentData[indexPath.row].image)
-    }
-    
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let offsetY = scrollView.contentOffset.y
-        let contentHeight = scrollView.contentSize.height
-        if offsetY > contentHeight - 1000  && searchController.searchBar.text != "" && !isLoading {
-            presenter?.makeRequestToInteractorToProvideWeatherData(isPagging: true, in: searchController.searchBar.text!)
-            isLoading = true
-        }
-    }
-}
-
-//MARK: - extension UISearchBarDelegate
-
-extension MainScreenViewController: UISearchBarDelegate {
-    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        searchController.isActive = true
-    }
-}
-
-//MARK: - extension UISearchResultsUpdating
-
-extension MainScreenViewController: UISearchResultsUpdating {
-    
-    func updateSearchResults(for searchController: UISearchController) {
-        
-        presenter?.updateSearch(searchController: searchController)
-    }
-}
-
-

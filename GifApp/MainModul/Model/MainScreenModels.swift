@@ -23,7 +23,7 @@ struct GIPHYModel: Decodable {
     }
 }
 
-struct ModelToShowOnScreen {
-    var image: String
+struct ViewModel {
+    var image: UIImage
+    var urlToImage: String
 }
-
