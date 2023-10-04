@@ -29,7 +29,7 @@ final class APIGIPHYRequest: DataFetcherProtocol {
     
     func getGIF(isPagging: Bool, searchFilter: SearchFilter, complition: @escaping ((Result<Any, NetworkError>) -> Void)) {
         changingOffsetIfNeeded(isPagging: isPagging)
-        makeDataTask(urlRequest: makeURLRequest(searchFilter: searchFilter), type: GIPHYModel.self, complitionHandler: complition)
+        makeDataTask(urlRequest: makeURLRequest(searchFilter: searchFilter), type: MainScreenModels.GIPHYModel.self, complitionHandler: complition)
     }
 }
 

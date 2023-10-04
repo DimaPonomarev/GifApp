@@ -10,8 +10,8 @@ import UIKit
 import SnapKit
 
 protocol MainScreenDisplayLogic: UIViewController {
-    
     var presenter: MainScreenPresentationProtocol? {get set}
+    
     func updateView()
     func showErrorAlert(error: NetworkError)
 }
@@ -24,7 +24,7 @@ final class MainScreenViewController: UIViewController {
     
     //MARK: - UI properties
     
-    private let customSearchController = CustomSearchController()
+    private let customSearchController = CustomSearchController(placeholderText: "Enter GIF name to search")
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
     
     // MARK: - Init
@@ -46,8 +46,9 @@ final class MainScreenViewController: UIViewController {
         setupConfigure()
     }
     
-    deinit {
-        print("deinit")
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        setupCollectionViewFlowLayout()
     }
 }
 
@@ -65,6 +66,8 @@ private extension MainScreenViewController {
     // MARK: - setupConfigure
     
     func setupConfigure() {
+        view.backgroundColor = .white
+        title = "GIF Searcher"
         addViews()
         makeConstraints()
         setupCollectionView()
@@ -74,14 +77,23 @@ private extension MainScreenViewController {
     //MARK: - addViews
     
     func addViews() {
+        view.addSubview(customSearchController)
         view.addSubview(collectionView)
     }
     
     //MARK: - makeConstraints
     
     func makeConstraints() {
+        
+        customSearchController.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            $0.horizontalEdges.equalToSuperview()
+        }
+        
         collectionView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+            $0.top.equalTo(customSearchController.snp.bottom)
+            $0.horizontalEdges.equalToSuperview()
+            $0.bottom.equalToSuperview()
         }
     }
     
@@ -91,22 +103,30 @@ private extension MainScreenViewController {
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.register(CustomCollectionViewCell.self, forCellWithReuseIdentifier: CustomCollectionViewCell.identifier)
-        let layout = UICollectionViewFlowLayout()
-        layout.minimumInteritemSpacing = 0
-        layout.minimumLineSpacing = 0
-        collectionView.setCollectionViewLayout(layout, animated: true)
+        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Cell")
     }
     
+    func setupCollectionViewFlowLayout() {
+        
+        let layout = UICollectionViewFlowLayout()
+        let collectionViewCellSize = collectionView.frame.width / 2
+        layout.minimumInteritemSpacing = 0
+        layout.minimumLineSpacing = 0
+        layout.sectionInset = UIEdgeInsets.zero
+        layout.itemSize = CGSize(width: collectionViewCellSize, height: collectionViewCellSize)
+        
+        collectionView.collectionViewLayout = layout
+    }
     //MARK: - setupSearchBar
     
     func setupSearchBar() {
-        navigationItem.searchController = customSearchController
-        customSearchController.closure = { [weak self] text in
+        customSearchController.getTextClouser = { [weak self] text in
             guard let self else { return }
-            self.presenter?.requestFor(inputedText: self.customSearchController.searchBar.text)
+            self.presenter?.textSearch(inputedText: text)
         }
     }
 }
+
 
 //MARK: - MainScreenDisplayLogic
 
@@ -117,13 +137,10 @@ extension MainScreenViewController: MainScreenDisplayLogic {
     }
     
     func showErrorAlert(error: NetworkError) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            switch error {
-            case .canceledResponse: break
-            default: self.presenter?.router?.errorAlert(error: error)
-            }
-        }
+        let alertController = UIAlertController(title: "Ошибка", message: error.localizedDescription, preferredStyle: .alert)
+        let cancel = UIAlertAction(title: "Отмена", style: .cancel)
+        alertController.addAction(cancel)
+        present(alertController, animated: true)
     }
 }
 
@@ -137,7 +154,7 @@ extension MainScreenViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomCollectionViewCell.identifier, for: indexPath) as? CustomCollectionViewCell,
-              let model = presenter?.getModel(index: indexPath.row) else { return UICollectionViewCell() }
+              let model = presenter?.getModel(index: indexPath.row) else { return collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath) }
         cell.configureView(model)
         return cell
     }
@@ -158,16 +175,5 @@ extension MainScreenViewController: UICollectionViewDelegate {
         if offsetY > contentHeight - scrollView.frame.height {
             presenter?.loadAdditionalData()
         }
-    }
-}
-
-//MARK: - UICollectionViewDelegateFlowLayout
-
-extension MainScreenViewController: UICollectionViewDelegateFlowLayout {
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let collectionViewWidth = collectionView.frame.width
-        let itemWidth = collectionViewWidth / 2
-        return CGSize(width: itemWidth, height: itemWidth)
     }
 }

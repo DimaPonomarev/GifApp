@@ -7,29 +7,44 @@
 
 import UIKit
 
-final class CustomSearchController: UISearchController, UISearchResultsUpdating {
+final class CustomSearchController: UISearchBar {
+    
+    //MARK: - init
 
-    var closure: ((String) ->())?
-
-    init() {
-        super.init(searchResultsController: nil)
+    init(placeholderText: String) {
+        super.init(frame: .zero)
         setupSearchController()
+        placeholder = placeholderText
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private func setupSearchController() {
-        searchBar.searchTextField.backgroundColor = .white.withAlphaComponent(0.7)
-        searchResultsUpdater = self
-        searchBar.searchTextField.placeholder = "Enter text to search GIF"
+    //MARK: - closure
+    
+    var getTextClouser: ((String) ->())?
+}
+
+//MARK: - Private Methods
+
+private extension CustomSearchController {
+    
+    func setupSearchController() {
+        searchBarStyle = .default
+        sizeToFit()
+        backgroundImage = UIImage()
+        backgroundColor = .white
+        clipsToBounds = true
+        delegate = self
     }
 }
 
-extension CustomSearchController {
+//MARK: - UISearchBarDelegate
+
+extension CustomSearchController: UISearchBarDelegate {
     
-    func updateSearchResults(for searchController: UISearchController) {
-        closure?(searchController.searchBar.text ?? "")
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        getTextClouser?(searchText)
     }
 }

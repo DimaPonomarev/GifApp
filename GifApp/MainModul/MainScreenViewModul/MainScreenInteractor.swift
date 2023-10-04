@@ -10,7 +10,7 @@ import UIKit
 protocol MainScreenInteractorProtocol {
     func providingGifData(isPagging: Bool, in inputedTextInSearchBar: String, handler: @escaping ((Result<Any, NetworkError>) -> Void))
     func downloadGifImage(imageUrl: String?, handler: @escaping ((UIImage)-> Void))
-    func cancelAllRequests() 
+    func cancelAllRequests()
 }
 
 final class MainScreenInteractor: MainScreenInteractorProtocol {
@@ -20,7 +20,7 @@ final class MainScreenInteractor: MainScreenInteractorProtocol {
     weak var presenter: MainScreenPresentationProtocol?
     private let GIPHYManagerNetwork = APIGIPHYRequest()
     
-    //MARK: - make request to WeatherManagerNetwork to get data and provide it to Presenter
+    //TODO: - make request to WeatherManagerNetwork to get data and provide it to Presenter
     
     func providingGifData(isPagging: Bool, in inputedTextInSearchBar: String, handler: @escaping ((Result<Any, NetworkError>) -> Void)) {
         GIPHYManagerNetwork.getGIF(isPagging: isPagging, searchFilter: SearchFilter(word: inputedTextInSearchBar), complition: handler)

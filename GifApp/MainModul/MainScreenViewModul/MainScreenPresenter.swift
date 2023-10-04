@@ -8,15 +8,15 @@
 import UIKit
 
 protocol MainScreenPresentationProtocol: AnyObject{
-    
     var viewController: MainScreenDisplayLogic? {get set}
     var router: MainScreenRouterProtocol? {get set}
     
     func getCountModel() -> Int
-    func getModel(index: Int) -> ViewModel
+    func getModel(index: Int) -> MainScreenModels.ViewModel
+    
+    func textSearch(inputedText: String?)
     func firstLoadData(text: String)
     func loadAdditionalData()
-    func requestFor(inputedText: String?)
 }
 
 class MainScreenPresenter: MainScreenPresentationProtocol {
@@ -32,17 +32,19 @@ class MainScreenPresenter: MainScreenPresentationProtocol {
     private var searchWorkItem: DispatchWorkItem?
     private var isLoading = false
     private var inputedText: String = ""
-    private var model: [ViewModel] = []
+    private var model: [MainScreenModels.ViewModel] = []
     
     //    MARK: - Delegate methodes
     
     func firstLoadData(text: String) {
+        
         isLoading = true
+        
         interactor?.providingGifData(isPagging: false, in: text) { [weak self] result in
             guard let self else { return }
             switch result {
             case .succes(let response):
-                if let model = response as? GIPHYModel, !model.data.isEmpty {
+                if let model = response as? MainScreenModels.GIPHYModel, !model.data.isEmpty {
                     self.createViewModel(model: model) {
                         self.isLoading = false
                         DispatchQueue.main.async { [weak self] in
@@ -52,17 +54,21 @@ class MainScreenPresenter: MainScreenPresentationProtocol {
                     }
                 }
             case.failure(let error):
-                self.viewController?.showErrorAlert(error: error)
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    self.checkError(error: error)
+                }
             }
         }
     }
     
-    func requestFor(inputedText: String?) {
+    func textSearch(inputedText: String?) {
         interactor?.cancelAllRequests()
         searchWorkItem?.cancel()
-        setupWorkItem(workItem: &searchWorkItem, deadline: 1) { [weak self] in
+        self.model = []
+        self.viewController?.updateView()
+        setupWorkItem(workItem: &searchWorkItem, deadline: 2) { [weak self] in
             guard let self else { return }
-            self.model = []
             self.inputedText = inputedText ?? ""
             self.firstLoadData(text: self.inputedText)
         }
@@ -75,7 +81,7 @@ class MainScreenPresenter: MainScreenPresentationProtocol {
             guard let self else { return }
             switch result {
             case .succes(let response):
-                if let model = response as? GIPHYModel, !model.data.isEmpty {
+                if let model = response as? MainScreenModels.GIPHYModel, !model.data.isEmpty {
                     self.createViewModel(model: model) {
                         self.isLoading = false
                         DispatchQueue.main.async { [weak self] in
@@ -86,11 +92,7 @@ class MainScreenPresenter: MainScreenPresentationProtocol {
                 }
             case .failure(let error):
                 DispatchQueue.main.async { [weak self] in
-                    guard let self else { return }
-                    switch error {
-                    case .canceledResponse: break
-                    default: self.viewController?.showErrorAlert(error: error)
-                    }
+                    self?.checkError(error: error)
                 }
             }
         }
@@ -102,7 +104,7 @@ class MainScreenPresenter: MainScreenPresentationProtocol {
         model.count
     }
     
-    func getModel(index: Int) -> ViewModel {
+    func getModel(index: Int) -> MainScreenModels.ViewModel {
         model[index]
     }
 }
@@ -116,15 +118,21 @@ private extension MainScreenPresenter {
         DispatchQueue.global().asyncAfter(deadline: .now() + deadline, execute: workItem)
     }
     
-    func createViewModel(model: GIPHYModel?, handler: @escaping () -> Void) {
+    func createViewModel(model: MainScreenModels.GIPHYModel?, handler: @escaping () -> Void) {
         guard let model else { return }
         for each in model.data {
             let eachURL = each.images.original.url
             interactor?.downloadGifImage(imageUrl: eachURL) { [weak self] image in
                 guard let self else { return }
-                self.model.append(ViewModel(image: image, urlToImage: eachURL))
+                self.model.append(MainScreenModels.ViewModel(image: image, urlToImage: eachURL))
                 handler()
             }
         }
     }
+    
+    func checkError(error: NetworkError) {
+        if case .canceledResponse = error { return }
+        self.viewController?.showErrorAlert(error: error)
+    }
 }
+

@@ -46,7 +46,7 @@ extension DataFetcherProtocol {
             
             DispatchQueue.global().async {
                 guard let HTTPResponse = response as? HTTPURLResponse else {
-                    complition(nil, nil, NetworkError.missedHTTPURLResponse)
+                    complition(nil, nil, NetworkError.canceledResponse)
                     return
                 }
                 if error != nil {

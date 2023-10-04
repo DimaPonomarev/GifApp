@@ -16,7 +16,7 @@ class CustomCollectionViewCell: UICollectionViewCell {
     
     //MARK: - UI properties
     
-    private let imageView = WebImageView()
+    private let imageView = UIImageView()
     
     //MARK: - init
     
@@ -37,7 +37,7 @@ class CustomCollectionViewCell: UICollectionViewCell {
     
     // MARK: - Public Methods
     
-    func configureView(_ model: ViewModel) {
+    func configureView(_ model: MainScreenModels.ViewModel) {
         self.imageView.image = model.image
     }
 }
